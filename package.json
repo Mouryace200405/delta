@@ -1,0 +1,101 @@
+{
+  "name": "delta",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Delta \u2014 a lightweight, local-first knowledge base: Markdown notes, tasks, calendar, and Excalidraw drawings in one workspace.",
+  "author": "Ivan",
+  "license": "MIT",
+  "desktopName": "Delta",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "dev": "vite",
+    "dev:electron": "npm run build:native && npm run build:main && concurrently -k -n vite,electron -c cyan,magenta \"vite\" \"wait-on tcp:5273 && DELTA_DEV=1 electron .\"",
+    "build:native": "npm --prefix native run build",
+    "build:main": "esbuild src/main/main.ts src/preload/preload.ts --bundle --platform=node --target=node22 --external:electron --outdir=dist --out-extension:.js=.js --format=cjs",
+    "build:renderer": "vite build",
+    "build": "npm run build:native && npm run build:main && npm run build:renderer",
+    "start": "npm run build && electron .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:rust": "cargo test --manifest-path native/Cargo.toml",
+    "test": "npm run test:rust && npm run typecheck && npm run smoke && npm run test:speech && npm run test:graph && npm run test:sync",
+    "icon": "node scripts/make-icon.mjs",
+    "dist": "npm run build && electron-builder --linux dir AppImage",
+    "dist:appimage": "npm run build && electron-builder --linux AppImage",
+    "smoke": "node scripts/smoke-core.mjs",
+    "test:sync": "node scripts/sync-test.mjs",
+    "test:speech": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/speech-test.mjs",
+    "seed": "node scripts/seed-demo.mjs",
+    "test:graph": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/graph-test.mjs"
+  },
+  "build": {
+    "appId": "app.delta.desktop",
+    "productName": "Delta",
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json",
+      "!**/node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "native",
+        "to": "native",
+        "filter": [
+          "index.js",
+          "index.d.ts",
+          "*.node"
+        ]
+      },
+      {
+        "from": "resources/icons",
+        "to": "icons",
+        "filter": [
+          "*.png",
+          "*.svg"
+        ]
+      }
+    ],
+    "linux": {
+      "target": [
+        "dir",
+        "AppImage"
+      ],
+      "category": "Office",
+      "icon": "resources/icons",
+      "synopsis": "Local-first knowledge base: notes, tasks, calendar and drawings",
+      "syncDesktopName": true
+    }
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.18.0",
+    "@codemirror/commands": "^6.8.0",
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/language": "^6.11.0",
+    "@codemirror/legacy-modes": "^6.5.5",
+    "@codemirror/search": "^6.5.10",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@excalidraw/excalidraw": "^0.18.1",
+    "markdown-it": "^15.0.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.10.9",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^9.1.0",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0",
+    "esbuild": "^0.28.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.5",
+    "wait-on": "^9.0.1"
+  }
+}
